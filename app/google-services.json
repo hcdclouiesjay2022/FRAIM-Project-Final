@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "467686134479",
+    "project_id": "fraim-project",
+    "storage_bucket": "fraim-project.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:467686134479:android:6f554b734d0ad1c17a5dba",
+        "android_client_info": {
+          "package_name": "com.adv101finalproject.fraimprojectfinal"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyB5wRO9LMKWiTF-Nise8SaLpGyw2JL2Yz8"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
