@@ -1,6 +1,10 @@
 package com.adv101finalproject.fraimprojectfinal;
 
 
+import static android.content.Context.NOTIFICATION_SERVICE;
+
+
+
 import android.app.Activity;
 import android.app.DatePickerDialog;
 import android.app.Notification;
@@ -17,6 +21,7 @@ import android.os.Build;
 import android.os.Bundle;
 import android.text.Editable;
 import android.text.TextWatcher;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -28,6 +33,7 @@ import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+import androidx.annotation.RequiresApi;
 import androidx.core.app.ActivityCompat;
 import androidx.core.app.NotificationCompat;
 import androidx.core.app.NotificationManagerCompat;
@@ -72,51 +78,56 @@ public class AddNewTask extends BottomSheetDialogFragment {
 
     }
 
-    private void createNotif()
-    {
-        String id = "id01";
-        NotificationManager manager = (NotificationManager) getSystemService(NOTIFICATION_SERVICE);
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            NotificationChannel channel = manager.getNotificationChannel(id);
-            if (channel == null) {
-                channel = new NotificationChannel(id, "FRAIM", NotificationManager.IMPORTANCE_HIGH);
-                channel.setDescription("[CHANNEL DESCRIPTION]");
-                channel.enableVibration(true);
-                channel.setVibrationPattern(new long[]{100, 1000, 00, 340});
-                channel.setLockscreenVisibility(Notification.VISIBILITY_PUBLIC);
-                manager.createNotificationChannel(channel);
+    @RequiresApi(api = Build.VERSION_CODES.Q)
+    private void createNotif(String title, String contentText) {
+        try {
+            String id = "id01";
+            NotificationManager manager = (NotificationManager) getContext().getSystemService(NOTIFICATION_SERVICE);
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                NotificationChannel channel = manager.getNotificationChannel(id);
+                if (channel == null) {
+                    channel = new NotificationChannel(id, "FRAIM", NotificationManager.IMPORTANCE_HIGH);
+                    channel.setDescription("[CHANNEL DESCRIPTION]");
+                    channel.enableVibration(true);
+                    channel.setVibrationPattern(new long[]{100, 1000, 00, 340});
+                    channel.setLockscreenVisibility(Notification.VISIBILITY_PUBLIC);
+                    manager.createNotificationChannel(channel);
+                }
             }
+            Intent notificationIntent = new Intent(getContext(), AddNewTask.class);
+            notificationIntent.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_SINGLE_TOP);
+            PendingIntent contentIntent = PendingIntent.getActivity(getContext(), 0, notificationIntent, PendingIntent.FLAG_IMMUTABLE);
+            NotificationCompat.Builder builder = new NotificationCompat.Builder(getContext(), id)
+                    .setSmallIcon(R.drawable.baseline_notifications_active_24)
+                    .setLargeIcon(BitmapFactory.decodeResource(getResources(), R.drawable.fraim_logo))
+                    .setStyle(new NotificationCompat.BigPictureStyle()
+                            .bigPicture(BitmapFactory.decodeResource(getResources(), R.drawable.fraim_logo))
+                            .bigLargeIcon(null))
+                    .setContentTitle(title)
+                    .setContentText(contentText)
+                    .setPriority(NotificationCompat.PRIORITY_HIGH)
+                    .setVibrate(new long[]{100, 1000, 00, 340})
+                    .setAutoCancel(false)
+                    .setTicker("Notification");
+            builder.setContentIntent(contentIntent);
+            NotificationManagerCompat model = NotificationManagerCompat.from(getContext());
+            if (ActivityCompat.checkSelfPermission(getContext(), android.Manifest.permission.POST_NOTIFICATIONS) != PackageManager.PERMISSION_GRANTED) {
+                // TODO: Consider calling
+                //    ActivityCompat#requestPermissions
+                // here to request the missing permissions, and then overriding
+                //   public void onRequestPermissionsResult(int requestCode, String[] permissions,
+                //                                          int[] grantResults)
+                // to handle the case where the user grants the permission. See the documentation
+                // for ActivityCompat#requestPermissions for more details.
+                return;
+            }
+            model.notify(1, builder.build());
+        }  catch (Exception e) {
+            // Log the exception
+            Log.e("CreateNotification", "Error creating notification", e);
         }
-        Intent notificationIntent = new Intent(this, AddNewTask.class);
-        notificationIntent.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_SINGLE_TOP);
-        PendingIntent contentIntent = PendingIntent.getActivity(this, 0, notificationIntent, 0);
-        NotificationCompat.Builder builder = new NotificationCompat.Builder(this, id)
-                .setSmallIcon(R.drawable.baseline_notifications_active_24)
-                .setLargeIcon(BitmapFactory.decodeResource(getResources(), R.drawable.fraim_logo))
-                .setStyle(new NotificationCompat.BigPictureStyle()
-                        .bigPicture(BitmapFactory.decodeResource(getResources(), R.drawable.fraim_logo))
-                        .bigLargeIcon(null))
-                .setContentTitle("Title")
-                .setContentText("Your tex description")
-                .setPriority(NotificationCompat.PRIORITY_HIGH)
-                .setVibrate(new long[]{100, 1000, 00, 340})
-                .setAutoCancel(false)
-                .setTicker("Notification");
-        builder.setContentIntent(contentIntent);
-        NotificationManagerCompat model = NotificationManagerCompat.from(getApplicationContext());
-        if (ActivityCompat.checkSelfPermission(this, android.Manifest.permission.POST_NOTIFICATIONS) != PackageManager.PERMISSION_GRANTED) {
-            // TODO: Consider calling
-            //    ActivityCompat#requestPermissions
-            // here to request the missing permissions, and then overriding
-            //   public void onRequestPermissionsResult(int requestCode, String[] permissions,
-            //                                          int[] grantResults)
-            // to handle the case where the user grants the permission. See the documentation
-            // for ActivityCompat#requestPermissions for more details.
-            return;
-        }
-        model.notify(1, builder.build());
-
     }
+
     @Override
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
@@ -175,10 +186,9 @@ public class AddNewTask extends BottomSheetDialogFragment {
             public void onClick(View v) {
                 Calendar calendar = Calendar.getInstance();
 
-                int MONTH = calendar.get(Calendar.MONTH);
-                int DAY = calendar.get(Calendar.DATE);
-                int YEAR = calendar.get(Calendar.YEAR);
-
+                int currentYear = calendar.get(Calendar.YEAR);
+                int currentMonth = calendar.get(Calendar.MONTH);
+                int currentDay = calendar.get(Calendar.DAY_OF_MONTH);
 
                 DatePickerDialog datePickerDialog = new DatePickerDialog(context, new DatePickerDialog.OnDateSetListener() {
                     @Override
@@ -186,14 +196,16 @@ public class AddNewTask extends BottomSheetDialogFragment {
                         month = month + 1;
                         setDueDate.setText(month + "/" + dayOfMonth + "/" + year);
                         dueDate = month + "/" + dayOfMonth + "/" + year;
-
                     }
-                } , MONTH, DAY, YEAR);
+                }, currentYear, currentMonth, currentDay);
 
                 datePickerDialog.show();
-
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+                    createNotif("title", "text");
+                }
             }
         });
+
 
         boolean finalIsUpdate = isUpdate;
         mSaveBtn.setOnClickListener(new View.OnClickListener() {
